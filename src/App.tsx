@@ -97,6 +97,27 @@ type RoundSummary = {
   commonModulesNormalized: string | null
   rareModulesRaw: string | null
   rareModulesNormalized: string | null
+
+  startTimeRaw: string | null
+  endTimeRaw: string | null
+
+  differenceRaw: string | null
+  differenceSeconds: number | null
+
+  upTimePctRaw: string | null
+  upTimePctValue: number | null
+
+  dayUpPctRaw: string | null
+  dayUpPctValue: number | null
+
+  dayDownRaw: string | null
+  dayDownValue: number | null
+
+  totalUpPctRaw: string | null
+  totalUpPctValue: number | null
+
+  daysSinceRaw: string | null
+  daysSinceValue: number | null
 }
 
 type RoundDerivedMetrics = {
@@ -530,6 +551,27 @@ function defaultSummary(): RoundSummary {
     commonModulesNormalized: null,
     rareModulesRaw: null,
     rareModulesNormalized: null,
+
+    startTimeRaw: null,
+    endTimeRaw: null,
+
+    differenceRaw: null,
+    differenceSeconds: null,
+
+    upTimePctRaw: null,
+    upTimePctValue: null,
+
+    dayUpPctRaw: null,
+    dayUpPctValue: null,
+
+    dayDownRaw: null,
+    dayDownValue: null,
+
+    totalUpPctRaw: null,
+    totalUpPctValue: null,
+
+    daysSinceRaw: null,
+    daysSinceValue: null,
   }
 }
 
@@ -1357,6 +1399,80 @@ const COLUMNS: ColumnDef[] = [
     group: 'optional',
     getValue: (r) => r.summary.rareModulesRaw || '—',
     sortValue: (r) => parseNumberForSort(r.summary.rareModulesNormalized),
+  },
+  {
+    key: 'startTime',
+    label: 'Start Time',
+    group: 'optional',
+    getValue: (r: RoundRecord): string => r.summary.startTimeRaw || '—',
+    sortValue: (r: RoundRecord): string => r.summary.startTimeRaw || '',
+  },
+  {
+    key: 'endTime',
+    label: 'End Time',
+    group: 'optional',
+    getValue: (r: RoundRecord): string => r.summary.endTimeRaw || '—',
+    sortValue: (r: RoundRecord): string => r.summary.endTimeRaw || '',
+  },
+  {
+    key: 'difference',
+    label: 'Difference',
+    group: 'optional',
+    getValue: (r: RoundRecord): string =>
+      r.summary.differenceSeconds !== null
+        ? formatDuration(r.summary.differenceSeconds)
+        : r.summary.differenceRaw || '—',
+    sortValue: (r: RoundRecord): number => r.summary.differenceSeconds ?? -1,
+  },
+  {
+    key: 'upTimePct',
+    label: 'Up Time %',
+    group: 'optional',
+    getValue: (r: RoundRecord): string =>
+      r.summary.upTimePctValue !== null
+        ? `${r.summary.upTimePctValue.toFixed(2)}%`
+        : r.summary.upTimePctRaw || '—',
+    sortValue: (r: RoundRecord): number => r.summary.upTimePctValue ?? -1,
+  },
+  {
+    key: 'dayUpPct',
+    label: 'Day Up %',
+    group: 'optional',
+    getValue: (r: RoundRecord): string =>
+      r.summary.dayUpPctValue !== null
+        ? `${r.summary.dayUpPctValue.toFixed(2)}%`
+        : r.summary.dayUpPctRaw || '—',
+    sortValue: (r: RoundRecord): number => r.summary.dayUpPctValue ?? -1,
+  },
+  {
+    key: 'dayDown',
+    label: 'Day Down',
+    group: 'optional',
+    getValue: (r: RoundRecord): string =>
+      r.summary.dayDownValue !== null
+        ? String(r.summary.dayDownValue)
+        : r.summary.dayDownRaw || '—',
+    sortValue: (r: RoundRecord): number => r.summary.dayDownValue ?? -1,
+  },
+  {
+    key: 'totalUpPct',
+    label: 'Total Up %',
+    group: 'optional',
+    getValue: (r: RoundRecord): string =>
+      r.summary.totalUpPctValue !== null
+        ? `${r.summary.totalUpPctValue.toFixed(2)}%`
+        : r.summary.totalUpPctRaw || '—',
+    sortValue: (r: RoundRecord): number => r.summary.totalUpPctValue ?? -1,
+  },
+  {
+    key: 'daysSince',
+    label: 'Days Since',
+    group: 'optional',
+    getValue: (r: RoundRecord): string =>
+      r.summary.daysSinceValue !== null
+        ? String(r.summary.daysSinceValue)
+        : r.summary.daysSinceRaw || '—',
+    sortValue: (r: RoundRecord): number => r.summary.daysSinceValue ?? -1,
   },
 ]
 
