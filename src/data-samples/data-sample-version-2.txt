@@ -9,6 +9,7 @@ Coins Earned	115.76q
 Coins Per Hour	24.98q
 Cells Earned	866.56K
 Cells Per Hour	186.98K
+
 Records
 Highest Coins / Minute	700.22T
 Largest Wave Skip	8
@@ -18,6 +19,7 @@ Largest Smart Missile Stack	12
 Largest Golden Combo	713
 Most Coins From Golden Combo	111.89T
 Largest Inner Landmine Charge	0
+
 Damage
 Damage Dealt	1.40ac
 Projectiles	5.92ab
@@ -35,15 +37,19 @@ Black Hole	132.79ab
 Flame Bot	0
 Attack Chip	0
 Electrons	337.44ab
+
 Damage Taken
 Tower	23.18s
 Wall	21.44s
+
 Bonus Health Gained
 From Death Wave	0.00
+
 Health Regenerated
 Lifesteal	117.74T
 Tower Health Regen	13.30B
 Wall Health Regen	3.53q
+
 Damage Blocked
 Defense %	883.61s
 Defense Absolute	94.36B
@@ -52,6 +58,7 @@ Chain Thunder	61.84s
 Flame Bot	0
 Primordial Collapse	0
 Negative Mass Projector	0
+
 Utility
 Recovery Packages	2401
 Free Attack Upgrade	198
@@ -59,6 +66,7 @@ Free Defense Upgrade	5000
 Free Utility Upgrade	815
 Enemy Attack Levels Skipped	2075
 Enemy Health Levels Skipped	2912
+
 Counts
 Projectiles Count	15.72M
 Land Mines Spawned	240983
@@ -69,6 +77,7 @@ Hits Absorbed By Energy Shield	34
 Nuke	1
 Second Wind	3
 Demon Mode	3
+
 Enemies Hit By
 Projectiles	684.05K
 Thorns	856
@@ -86,6 +95,7 @@ Thunder Bot	0
 Flame Bot	0
 Attack Chip	0
 Orbital Augment	309.21K
+
 Killed With Effect Active
 Golden Tower	731153
 Death Wave	610.43K
@@ -93,6 +103,7 @@ Spotlight	593291
 Amplify Bot	0
 Golden Bot	397106
 Death Penalty	0
+
 Total Enemies
 Total Enemies	731185
 Basic	148206
@@ -108,6 +119,7 @@ Saboteur	17
 Commander	22
 Overcharge	17
 Summoned Enemies	72.84K
+
 Coins
 Coins Earned	115.76q
 Coin Bonus Upgrade	21.56q
@@ -124,10 +136,12 @@ Wave Skip	41.26q
 Coins / Wave	28.76B
 Coins Fetched	239.10T
 Bounty Coins	0
+
 Cash
 Cash Earned	$291.98B
 Golden Tower	$33.88B
 Interest earned	$3.77M
+
 Currencies
 Cells Earned	866.56K
 Gems	0
@@ -143,6 +157,7 @@ Generator Shards	393
 Core Shards	237
 Common Modules	112
 Rare Modules	9
+
 Enemies Destroyed By
 Projectiles	126
 Thorns	258

@@ -9,7 +9,7 @@ import {
   Upload,
 } from 'lucide-react'
 
-const SCHEMA_VERSION = 1
+const RECORD_SCHEMA_VERSION = 1
 const PARSER_VERSION = 1
 const DERIVED_METRICS_VERSION = 1
 
@@ -143,6 +143,7 @@ type RoundDerivedMetrics = {
 type RoundRecord = {
   id: string
   schemaVersion: number
+  sourceFormatVersion: 1 | 2 | null
   parserVersion: number
   derivedMetricsVersion: number
   createdAtUtc: string
@@ -632,6 +633,57 @@ const CANONICAL_FIELD_MAP: Record<
   core_shards: 'coreShardsRaw',
   common_modules: 'commonModulesRaw',
   rare_modules: 'rareModulesRaw',
+
+  start_time: 'startTimeRaw',
+  end_time: 'endTimeRaw',
+  difference: 'differenceRaw',
+  up_time: 'upTimePctRaw',
+  up_time_pct: 'upTimePctRaw',
+  day_up: 'dayUpPctRaw',
+  day_up_pct: 'dayUpPctRaw',
+  day_down: 'dayDownRaw',
+  total_up: 'totalUpPctRaw',
+  total_up_pct: 'totalUpPctRaw',
+  days_since: 'daysSinceRaw',
+}
+
+const V2_CANONICAL_FIELD_MAP: Record<
+  string,
+  keyof RoundSummary | 'battleDateRaw'
+> = {
+  'battle_report.battle_date': 'battleDateRaw',
+  'battle_report.game_time': 'gameTimeRaw',
+  'battle_report.real_time': 'realTimeRaw',
+  'battle_report.tier': 'tier',
+  'battle_report.wave': 'wave',
+  'battle_report.killed_by': 'killedBy',
+  'battle_report.coins_earned': 'coinsEarnedRaw',
+  'battle_report.coins_per_hour': 'coinsPerHourReportedRaw',
+  'battle_report.cells_earned': 'cellsEarnedRaw',
+  // 'battle_report.cells_per_hour': 'cellsEarnedRaw',
+  // 'battle_report.cells_per_hour': 'cellsPerHourReportedRaw',
+  'counts.waves_skipped': 'wavesSkipped',
+  'counts.death_defy': 'deathDefy',
+  'coins.golden_tower': 'coinsFromGoldenTowerRaw',
+  'coins.death_wave': 'coinsFromDeathWaveRaw',
+  'coins.spotlight': 'coinsFromSpotlightRaw',
+  'coins.black_hole': 'coinsFromBlackHoleRaw',
+  'coins.coin_bonus_upgrade': 'coinsFromCoinUpgradeRaw',
+  'coins.coins_from_coin_bonuses': 'coinsFromCoinBonusesRaw',
+  'coins.coins_fetched': 'coinsFetchedRaw',
+  'cash.cash_earned': 'cashEarnedRaw',
+  'currencies.cells_earned': 'cellsEarnedRaw',
+  'currencies.reroll_shards_earned': 'rerollShardsEarnedRaw',
+  'currencies.gems': 'gemsRaw',
+  'currencies.medals': 'medalsRaw',
+  'currencies.reroll_shards_fetched': 'rerollShardsFetchedRaw',
+  'currencies.cannon_shards': 'cannonShardsRaw',
+  'currencies.armor_shards': 'armorShardsRaw',
+  'currencies.generator_shards': 'generatorShardsRaw',
+  'currencies.core_shards': 'coreShardsRaw',
+  'currencies.common_modules': 'commonModulesRaw',
+  'currencies.rare_modules': 'rareModulesRaw',
+  'total_enemies.summoned_enemies': 'guardianSummonedEnemiesRaw',
 }
 
 const SECTION_NAMES = new Set([
@@ -641,70 +693,251 @@ const SECTION_NAMES = new Set([
   'enemies destroyed',
   'bots',
   'guardian',
+  'records',
+  'damage',
+  'damage taken',
+  'bonus health gained',
+  'health regenerated',
+  'damage blocked',
+  'counts',
+  'enemies hit by',
+  'killed with effect active',
+  'total enemies',
+  'coins',
+  'cash',
+  'currencies',
+  'enemies destroyed by',
 ])
 
-function assignSummaryField(
+const SECTION_LABEL_FIELD_MAP: Record<
+  string,
+  Record<string, keyof RoundSummary | 'battleDateRaw'>
+> = {
+  battle_report: {
+    coins_earned: 'coinsEarnedRaw',
+    coins_per_hour: 'coinsPerHourReportedRaw',
+    cells_earned: 'cellsEarnedRaw',
+    cells_per_hour: 'cellsEarnedRaw',
+    reroll_shards_earned: 'rerollShardsEarnedRaw',
+    cash_earned: 'cashEarnedRaw',
+    death_defy: 'deathDefy',
+    waves_skipped: 'wavesSkipped',
+  },
+  utility: {
+    coins_from_death_wave: 'coinsFromDeathWaveRaw',
+    coins_from_golden_tower: 'coinsFromGoldenTowerRaw',
+    coins_from_black_hole: 'coinsFromBlackHoleRaw',
+    coins_from_spotlight: 'coinsFromSpotlightRaw',
+    coins_from_coin_upgrade: 'coinsFromCoinUpgradeRaw',
+    coins_from_coin_bonuses: 'coinsFromCoinBonusesRaw',
+  },
+  guardian: {
+    summoned_enemies: 'guardianSummonedEnemiesRaw',
+    guardian_coins_stolen: 'guardianCoinsStolenRaw',
+    coins_fetched: 'coinsFetchedRaw',
+    gems: 'gemsRaw',
+    medals: 'medalsRaw',
+    reroll_shards_fetched: 'rerollShardsFetchedRaw',
+    cannon_shards: 'cannonShardsRaw',
+    armor_shards: 'armorShardsRaw',
+    generator_shards: 'generatorShardsRaw',
+    core_shards: 'coreShardsRaw',
+    common_modules: 'commonModulesRaw',
+    rare_modules: 'rareModulesRaw',
+  },
+  coins: {
+    coins_earned: 'coinsEarnedRaw',
+    coin_bonus_upgrade: 'coinsFromCoinUpgradeRaw',
+    coins_from_coin_bonuses: 'coinsFromCoinBonusesRaw',
+    golden_tower: 'coinsFromGoldenTowerRaw',
+    death_wave: 'coinsFromDeathWaveRaw',
+    spotlight: 'coinsFromSpotlightRaw',
+    black_hole: 'coinsFromBlackHoleRaw',
+    coins_fetched: 'coinsFetchedRaw',
+  },
+  cash: {
+    cash_earned: 'cashEarnedRaw',
+  },
+  currencies: {
+    cells_earned: 'cellsEarnedRaw',
+    reroll_shards_earned: 'rerollShardsEarnedRaw',
+    gems: 'gemsRaw',
+    medals: 'medalsRaw',
+    reroll_shards_fetched: 'rerollShardsFetchedRaw',
+    cannon_shards: 'cannonShardsRaw',
+    armor_shards: 'armorShardsRaw',
+    generator_shards: 'generatorShardsRaw',
+    core_shards: 'coreShardsRaw',
+    common_modules: 'commonModulesRaw',
+    rare_modules: 'rareModulesRaw',
+  },
+  total_enemies: {
+    summoned_enemies: 'guardianSummonedEnemiesRaw',
+  },
+}
+
+const NORMALIZED_VALUE_FIELD_MAP: Record<string, keyof RoundSummary> = {
+  coinsEarnedRaw: 'coinsEarnedNormalized',
+  coinsPerHourReportedRaw: 'coinsPerHourReportedNormalized',
+  cashEarnedRaw: 'cashEarnedNormalized',
+  cellsEarnedRaw: 'cellsEarnedNormalized',
+  rerollShardsEarnedRaw: 'rerollShardsEarnedNormalized',
+  coinsFromDeathWaveRaw: 'coinsFromDeathWaveNormalized',
+  coinsFromGoldenTowerRaw: 'coinsFromGoldenTowerNormalized',
+  coinsFromBlackHoleRaw: 'coinsFromBlackHoleNormalized',
+  coinsFromSpotlightRaw: 'coinsFromSpotlightNormalized',
+  coinsFromCoinUpgradeRaw: 'coinsFromCoinUpgradeNormalized',
+  coinsFromCoinBonusesRaw: 'coinsFromCoinBonusesNormalized',
+  guardianSummonedEnemiesRaw: 'guardianSummonedEnemiesNormalized',
+  guardianCoinsStolenRaw: 'guardianCoinsStolenNormalized',
+  coinsFetchedRaw: 'coinsFetchedNormalized',
+  gemsRaw: 'gemsNormalized',
+  medalsRaw: 'medalsNormalized',
+  rerollShardsFetchedRaw: 'rerollShardsFetchedNormalized',
+  cannonShardsRaw: 'cannonShardsNormalized',
+  armorShardsRaw: 'armorShardsNormalized',
+  generatorShardsRaw: 'generatorShardsNormalized',
+  coreShardsRaw: 'coreShardsNormalized',
+  commonModulesRaw: 'commonModulesNormalized',
+  rareModulesRaw: 'rareModulesNormalized',
+}
+
+const DURATION_VALUE_FIELD_MAP: Record<string, keyof RoundSummary> = {
+  gameTimeRaw: 'gameTimeSeconds',
+  realTimeRaw: 'realTimeSeconds',
+  differenceRaw: 'differenceSeconds',
+}
+
+const PERCENT_VALUE_FIELD_MAP: Record<string, keyof RoundSummary> = {
+  upTimePctRaw: 'upTimePctValue',
+  dayUpPctRaw: 'dayUpPctValue',
+  totalUpPctRaw: 'totalUpPctValue',
+}
+
+const INTEGER_VALUE_FIELD_MAP: Record<string, keyof RoundSummary> = {
+  dayDownRaw: 'dayDownValue',
+  daysSinceRaw: 'daysSinceValue',
+}
+
+function getCanonicalField(
+  sectionKey: string,
+  labelNormalized: string,
+): keyof RoundSummary | 'battleDateRaw' | null {
+  const sectionMap = SECTION_LABEL_FIELD_MAP[sectionKey]
+  if (sectionMap && labelNormalized in sectionMap) {
+    return sectionMap[labelNormalized]
+  }
+
+  return CANONICAL_FIELD_MAP[labelNormalized] || null
+}
+
+function parseLooseNumber(rawValue: string): number | null {
+  const clean = rawValue.replace(/[%,$]/g, '').replace(/,/g, '').trim()
+  if (!clean) return null
+
+  const normalized = parseNormalizedValue(clean, classifyValue(clean, clean))
+  const candidate = normalized || clean
+  const num = Number(candidate)
+  return Number.isFinite(num) ? num : null
+}
+
+function assignSummaryFieldV1(
   summary: RoundSummary,
-  normalizedKey: string,
+  mappedField: keyof RoundSummary | 'battleDateRaw' | null,
   rawValue: string,
   normalizedValue: string | null,
   valueType: ValueType,
 ): { battleDateRaw: string | null } {
-  const mapped = CANONICAL_FIELD_MAP[normalizedKey]
   let battleDateRaw: string | null = null
-  if (!mapped) return { battleDateRaw }
-  if (mapped === 'battleDateRaw') return { battleDateRaw: rawValue }
+  if (!mappedField) return { battleDateRaw }
+  if (mappedField === 'battleDateRaw') return { battleDateRaw: rawValue }
+
   if (
-    mapped === 'tier' ||
-    mapped === 'wave' ||
-    mapped === 'deathDefy' ||
-    mapped === 'wavesSkipped'
+    mappedField === 'tier' ||
+    mappedField === 'wave' ||
+    mappedField === 'deathDefy' ||
+    mappedField === 'wavesSkipped'
   ) {
     const num = Number((normalizedValue || rawValue).replace(/,/g, ''))
-    ;(summary[mapped] as number | null) = Number.isFinite(num) ? num : null
+    ;(summary[mappedField] as number | null) = Number.isFinite(num) ? num : null
     return { battleDateRaw }
   }
-  ;(summary[mapped] as string | null) = rawValue
-  const normalizedMirrorMap: Record<string, keyof RoundSummary> = {
-    coinsEarnedRaw: 'coinsEarnedNormalized',
-    coinsPerHourReportedRaw: 'coinsPerHourReportedNormalized',
-    cashEarnedRaw: 'cashEarnedNormalized',
-    cellsEarnedRaw: 'cellsEarnedNormalized',
-    rerollShardsEarnedRaw: 'rerollShardsEarnedNormalized',
-    coinsFromDeathWaveRaw: 'coinsFromDeathWaveNormalized',
-    coinsFromGoldenTowerRaw: 'coinsFromGoldenTowerNormalized',
-    coinsFromBlackHoleRaw: 'coinsFromBlackHoleNormalized',
-    coinsFromSpotlightRaw: 'coinsFromSpotlightNormalized',
-    coinsFromCoinUpgradeRaw: 'coinsFromCoinUpgradeNormalized',
-    coinsFromCoinBonusesRaw: 'coinsFromCoinBonusesNormalized',
-    guardianSummonedEnemiesRaw: 'guardianSummonedEnemiesNormalized',
-    guardianCoinsStolenRaw: 'guardianCoinsStolenNormalized',
-    coinsFetchedRaw: 'coinsFetchedNormalized',
-    gemsRaw: 'gemsNormalized',
-    medalsRaw: 'medalsNormalized',
-    rerollShardsFetchedRaw: 'rerollShardsFetchedNormalized',
-    cannonShardsRaw: 'cannonShardsNormalized',
-    armorShardsRaw: 'armorShardsNormalized',
-    generatorShardsRaw: 'generatorShardsNormalized',
-    coreShardsRaw: 'coreShardsNormalized',
-    commonModulesRaw: 'commonModulesNormalized',
-    rareModulesRaw: 'rareModulesNormalized',
-  }
-  const durationMirrorMap: Record<string, keyof RoundSummary> = {
-    gameTimeRaw: 'gameTimeSeconds',
-    realTimeRaw: 'realTimeSeconds',
-  }
-  if (mapped in normalizedMirrorMap) {
-    const mirrorField = normalizedMirrorMap[mapped]
+
+  ;(summary[mappedField] as string | null) = rawValue
+
+  if (mappedField in NORMALIZED_VALUE_FIELD_MAP) {
+    const mirrorField = NORMALIZED_VALUE_FIELD_MAP[mappedField]
     ;(summary[mirrorField] as string | null) = normalizedValue
   }
-  if (mapped in durationMirrorMap) {
-    const mirrorField = durationMirrorMap[mapped]
+
+  if (mappedField in DURATION_VALUE_FIELD_MAP) {
+    const mirrorField = DURATION_VALUE_FIELD_MAP[mappedField]
     ;(summary[mirrorField] as number | null) =
       valueType === 'duration' && normalizedValue
         ? Number(normalizedValue)
         : null
   }
+
+  if (mappedField in PERCENT_VALUE_FIELD_MAP) {
+    const mirrorField = PERCENT_VALUE_FIELD_MAP[mappedField]
+    ;(summary[mirrorField] as number | null) = parseLooseNumber(rawValue)
+  }
+
+  if (mappedField in INTEGER_VALUE_FIELD_MAP) {
+    const mirrorField = INTEGER_VALUE_FIELD_MAP[mappedField]
+    ;(summary[mirrorField] as number | null) = parseLooseNumber(rawValue)
+  }
+
+  return { battleDateRaw }
+}
+
+function assignSummaryFieldV2(
+  summary: RoundSummary,
+  mappedField: keyof RoundSummary | 'battleDateRaw' | null,
+  rawValue: string,
+  normalizedValue: string | null,
+  valueType: ValueType,
+): { battleDateRaw: string | null } {
+  let battleDateRaw: string | null = null
+  if (!mappedField) return { battleDateRaw }
+  if (mappedField === 'battleDateRaw') return { battleDateRaw: rawValue }
+
+  if (
+    mappedField === 'tier' ||
+    mappedField === 'wave' ||
+    mappedField === 'deathDefy' ||
+    mappedField === 'wavesSkipped'
+  ) {
+    const num = Number((normalizedValue || rawValue).replace(/,/g, ''))
+    ;(summary[mappedField] as number | null) = Number.isFinite(num) ? num : null
+    return { battleDateRaw }
+  }
+
+  ;(summary[mappedField] as string | null) = rawValue
+
+  if (mappedField in NORMALIZED_VALUE_FIELD_MAP) {
+    const mirrorField = NORMALIZED_VALUE_FIELD_MAP[mappedField]
+    ;(summary[mirrorField] as string | null) = normalizedValue
+  }
+
+  if (mappedField in DURATION_VALUE_FIELD_MAP) {
+    const mirrorField = DURATION_VALUE_FIELD_MAP[mappedField]
+    ;(summary[mirrorField] as number | null) =
+      valueType === 'duration' && normalizedValue
+        ? Number(normalizedValue)
+        : null
+  }
+
+  if (mappedField in PERCENT_VALUE_FIELD_MAP) {
+    const mirrorField = PERCENT_VALUE_FIELD_MAP[mappedField]
+    ;(summary[mirrorField] as number | null) = parseLooseNumber(rawValue)
+  }
+
+  if (mappedField in INTEGER_VALUE_FIELD_MAP) {
+    const mirrorField = INTEGER_VALUE_FIELD_MAP[mappedField]
+    ;(summary[mirrorField] as number | null) = parseLooseNumber(rawValue)
+  }
+
   return { battleDateRaw }
 }
 
@@ -896,6 +1129,21 @@ function getCellHeatmapStyle(
   return getHeatmapStyle(percentile)
 }
 
+function detectSourceFormatVersion(lines: string[]): 1 | 2 {
+  const normalizedLines: string[] = lines.map((line: string): string =>
+    line.trim().toLowerCase(),
+  )
+
+  const hasV2Sections: boolean =
+    normalizedLines.includes('records') ||
+    normalizedLines.includes('damage taken') ||
+    normalizedLines.includes('counts') ||
+    normalizedLines.includes('currencies') ||
+    normalizedLines.includes('enemies destroyed by')
+
+  return hasV2Sections ? 2 : 1
+}
+
 async function parseBattleReport(
   rawText: string,
   existingRounds: RoundRecord[],
@@ -915,6 +1163,8 @@ async function parseBattleReport(
     .map((line: string): string => line.trimEnd())
     .filter((line: string): boolean => line.trim().length > 0)
 
+  const sourceFormatVersion: 1 | 2 = detectSourceFormatVersion(lines)
+
   const warnings: ParseMessage[] = []
   const errors: ParseMessage[] = []
   const unparsedLines: string[] = []
@@ -932,10 +1182,8 @@ async function parseBattleReport(
       sectionKey = normalizeLabelToSnakeCase(line)
       continue
     }
-    const parts = line.includes('\t')
-      ? line
-          .split('\t')
-          .filter((part: string): boolean => part.trim().length > 0)
+    const parts = line.includes('	')
+      ? line.split('	').filter((part: string): boolean => part.trim().length > 0)
       : line
           .split(/\s{2,}/)
           .filter((part: string): boolean => part.trim().length > 0)
@@ -950,7 +1198,7 @@ async function parseBattleReport(
     const labelOriginal = parts[0].trim()
     const rawValue = parts.slice(1).join(' ').trim()
     const labelNormalized = normalizeLabelToSnakeCase(labelOriginal)
-    const canonicalField = CANONICAL_FIELD_MAP[labelNormalized] || null
+    const canonicalField = getCanonicalField(sectionKey, labelNormalized)
     const valueType = classifyValue(rawValue, labelOriginal)
     const normalizedValue = parseNormalizedValue(rawValue, valueType)
     if (
@@ -965,13 +1213,22 @@ async function parseBattleReport(
         message: `Could not normalize value for ${labelOriginal}: ${rawValue}`,
       })
     }
-    const assignResult = assignSummaryField(
-      summary,
-      labelNormalized,
-      rawValue,
-      normalizedValue,
-      valueType,
-    )
+    const assignResult =
+      sourceFormatVersion === 2
+        ? assignSummaryFieldV2(
+            summary,
+            canonicalField,
+            rawValue,
+            normalizedValue,
+            valueType,
+          )
+        : assignSummaryFieldV1(
+            summary,
+            canonicalField,
+            rawValue,
+            normalizedValue,
+            valueType,
+          )
     if (assignResult.battleDateRaw) battleDateRaw = assignResult.battleDateRaw
     stats.push({
       sectionOriginal,
@@ -1035,7 +1292,8 @@ async function parseBattleReport(
     previewSummary,
     record: {
       id: generateId(),
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: RECORD_SCHEMA_VERSION,
+      sourceFormatVersion,
       parserVersion: PARSER_VERSION,
       derivedMetricsVersion: DERIVED_METRICS_VERSION,
       createdAtUtc: nowUtc,

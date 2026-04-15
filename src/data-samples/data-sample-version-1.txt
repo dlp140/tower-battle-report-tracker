@@ -12,6 +12,7 @@ Interest earned	$3.26M
 Gem Blocks Tapped	1
 Cells Earned	748.29K
 Reroll Shards Earned	98.97K
+
 Combat
 Damage Dealt	221.98ab
 Damage Taken	66.08s
@@ -37,6 +38,7 @@ Tagged by Death Wave	523690
 Swamp Damage	3.64aa
 Black Hole Damage	23.68ab
 Electrons Damage	37.28ab
+
 Utility
 Waves Skipped	2750
 Recovery Packages	2042
@@ -52,6 +54,7 @@ Coins From Spotlight	2.21T
 Coins From Orb	0
 Coins from Coin Upgrade	130.31T
 Coins from Coin Bonuses	19.45q
+
 Enemies Destroyed
 Total Enemies	623876
 Basic	129010
@@ -72,6 +75,7 @@ Destroyed by Thorns	204
 Destroyed by Death Ray	0
 Destroyed by Land Mine	0
 Destroyed in Spotlight	506419
+
 Bots
 Flame Bot Damage	0
 Thunder Bot Stuns	0
