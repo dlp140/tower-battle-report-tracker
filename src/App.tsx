@@ -1988,7 +1988,7 @@ export default function App(): React.JSX.Element {
   async function handleExport(): Promise<void> {
     const payload: ImportPayload = {
       exportedAt: new Date().toISOString(),
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: RECORD_SCHEMA_VERSION,
       parserVersion: PARSER_VERSION,
       derivedMetricsVersion: DERIVED_METRICS_VERSION,
       rounds,
